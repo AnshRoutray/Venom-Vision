@@ -55,5 +55,5 @@ void setup() {
 }
 
 void loop() {
-    // server runs in its own thread
+
 }
