@@ -7,8 +7,8 @@
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
-int claw_left_channel = 11;
-int claw_right_channel = 12; 
+int claw_left_channel = 12;
+int claw_right_channel = 13; 
 
 // Servo channels on PCA9685 (0-15)
 #define FL_HIP 0
