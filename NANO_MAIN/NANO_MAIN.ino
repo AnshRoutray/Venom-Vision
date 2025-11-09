@@ -23,6 +23,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define BL_KNEE 9
 #define BR_HIP 10
 #define BR_KNEE 11
+#define ESP32_CAM A1;
 
 // Servo pulse lengths (tune these!)
 #define SERVOMIN 150   // Min pulse length (0 degrees)
@@ -73,6 +74,7 @@ void setServoAngle(int channel, double angle) {
 Command currentCommand = CMD_STOP;
 
 void setup(){
+  Serial.begin(9600);
   pwm.begin();
   pwm.setPWMFreq(PWM_Frequency); 
   delay(10);
@@ -227,29 +229,22 @@ void updateWalkingStateMachine() {
 
 // Read commands from ESP32-CAM
 void readCameraCommands() {
-  if (Serial.available() > 0) {
-    char cmd = Serial.read();
-    
-    switch (cmd) {
-      case 'F':
-        currentCommand = CMD_FORWARD;
-        break;
-      case 'B':
-        currentCommand = CMD_BACKWARD;
-        break;
-      case 'L':
-        currentCommand = CMD_LEFT;
-        break;
-      case 'R':
-        currentCommand = CMD_RIGHT;
-        break;
-      case 'S':
-        currentCommand = CMD_STOP;
-        break;
+  if(Serial.available() > 0){
+    uint8_t cmd = Serial.read();
+    switch(cmd) {
+      case 1: 
+      currentCommand = CMD_STOP;
+      break;
+      case 2:
+      currentCommand = CMD_FORWARD;
+      break;
+      case 3:
+      currentCommand = CMD_RIGHT;
+      break;
+      case 4:
+      currentCommand = CMD_LEFT;
+      break;
     }
-    
-    Serial.print("Command: ");
-    Serial.println(cmd);
   }
 }
 

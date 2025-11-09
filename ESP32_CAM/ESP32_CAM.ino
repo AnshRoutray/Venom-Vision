@@ -73,6 +73,8 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 #define CMD_PIN           13
+#define RXD2              14
+#define TXD2              16
 
 #else
 #error "Camera model not selected"
@@ -82,11 +84,11 @@
 #define EI_CAMERA_RAW_FRAME_BUFFER_COLS           320
 #define EI_CAMERA_RAW_FRAME_BUFFER_ROWS           240
 #define EI_CAMERA_FRAME_BYTE_SIZE                 3
-#define STOP_CMD                                  0
-#define FORWARD_CMD                               1
-#define RIGHT_CMD                                 2
-#define LEFT_CMD                                  3
-#define TURNING_THRESHOLD                         6
+#define STOP_CMD                                  1
+#define FORWARD_CMD                               2
+#define RIGHT_CMD                                 3
+#define LEFT_CMD                                  4
+#define TURNING_THRESHOLD                         5
 #define IMAGE_WIDTH                               40
 #define IMAGE_HEIGHT                              40
 
@@ -158,8 +160,10 @@ void setup()
     ei_sleep(2000);
 
     //Pin Settings
-
     pinMode(CMD_PIN, OUTPUT);
+
+    //Setting UART communication with Arduino Nano
+    Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 }
 
 /**
@@ -212,7 +216,7 @@ void loop()
     for (uint32_t i = 0; i < result.bounding_boxes_count; i++) {
         ei_impulse_result_bounding_box_t bb = result.bounding_boxes[i];
         if (bb.value == 0) {
-            analogWrite(CMD_PIN, STOP_CMD);
+            Serial2.write(STOP_CMD);
             ei_printf("STOP\n");
             continue;
         }
@@ -228,15 +232,15 @@ void loop()
         uint32_t trueY = bb.y + bb.height / 2;
         uint32_t turningAngle = 0;
         if(trueX > 32) {
-            analogWrite(CMD_PIN, LEFT_CMD);
+            Serial2.write(RIGHT_CMD);
             ei_printf("RIGHT\n");
         }
         else if(trueX < 24) {
-            analogWrite(CMD_PIN, RIGHT_CMD);
+            Serial2.write(LEFT_CMD);
             ei_printf("LEFT\n");
         }
         else {
-            analogWrite(CMD_PIN, FORWARD_CMD);
+            Serial2.write(FORWARD_CMD);
             ei_printf("FORWARD\n");
         }
         //Implement communication with Arduino when receiving 3 images
@@ -313,9 +317,9 @@ void loop()
     
 
     if(result.bounding_boxes_count == 0){
-        if(stop_counter == 7) {
+        if(stop_counter == 10) {
             ei_printf("STOP\n");
-            analogWrite(CMD_PIN, STOP_CMD);
+            Serial2.write(STOP_CMD);
             stop_counter = 0;
         }
         stop_counter++;
@@ -491,20 +495,6 @@ static int ei_camera_get_data(size_t offset, size_t length, float *out_ptr)
     }
     // and done!
     return 0;
-}
-
-uint32_t min(uint32_t a, uint32_t b) {
-  if(a < b){
-    return a;
-  }
-  return b;
-}
-
-uint32_t max(uint32_t a, uint32_t b) {
-  if(a > b){
-    return a;
-  }
-  return b;
 }
 
 #if !defined(EI_CLASSIFIER_SENSOR) || EI_CLASSIFIER_SENSOR != EI_CLASSIFIER_SENSOR_CAMERA
