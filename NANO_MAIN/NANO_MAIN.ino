@@ -7,8 +7,8 @@
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
-int claw_left_channel = 12;
-int claw_right_channel = 13; 
+#define claw_left_channel 12
+#define claw_right_channel 13
 
 // Servo channels on PCA9685 (0-15)
 #define FL_HIP 0
@@ -65,10 +65,12 @@ enum Command {
   CMD_RIGHT
 };
 
-void move_servo_angle(int channel, double angle) {
+void setServoAngle(int channel, double angle) {
   long angle_pulse = map(angle, 0.0, 180.0, Min_Pulse, Max_Pulse); 
   pwm.writeMicroseconds(channel, angle_pulse);
 }
+
+Command currentCommand = CMD_STOP;
 
 void setup(){
   pwm.begin();
@@ -252,16 +254,16 @@ void readCameraCommands() {
 }
 
 void close_claw() {
-  move_servo_angle(claw_left_channel, 90);
-  move_servo_angle(claw_right_channel, 90);
+  setServoAngle(claw_left_channel, 90);
+  setServoAngle(claw_right_channel, 90);
 }
 
 void open_claw() {
-  move_servo_angle(claw_left_channel, 20);
-  move_servo_angle(claw_right_channel, 160);
+  setServoAngle(claw_left_channel, 20);
+  setServoAngle(claw_right_channel, 160);
 }
 
 void return_claw() {
-  move_servo_angle(claw_left_channel, 45);
-  move_servo_angle(claw_right_channel, 135);
+  setServoAngle(claw_left_channel, 45);
+  setServoAngle(claw_right_channel, 135);
 }
