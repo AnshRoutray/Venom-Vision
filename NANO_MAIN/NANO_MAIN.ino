@@ -9,6 +9,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 #define claw_left_channel 12
 #define claw_right_channel 13
+#define potPin A0
 
 // Servo channels on PCA9685 (0-15)
 #define FL_HIP 0
@@ -28,6 +29,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // Servo pulse lengths (tune these!)
 #define SERVOMIN 150   // Min pulse length (0 degrees)
 #define SERVOMAX 600   // Max pulse length (180 degrees)
+#define SERVOSTOP 375
 
 // Gait parameters - SPEED OPTIMIZED
 #define HIP_CENTER 90
@@ -41,6 +43,8 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define LIFT_TIME 80        // ms to lift legs (was 100)
 #define SWING_TIME 120      // ms to swing (was 200)
 #define LOWER_TIME 80       // ms to lower legs (was 100)
+
+int targetAngle = 60; 
 
 // Walking state machine
 enum WalkState {
@@ -70,7 +74,32 @@ void setServoAngle(int channel, double angle) {
   long angle_pulse = map(angle, 0.0, 180.0, Min_Pulse, Max_Pulse); 
   pwm.writeMicroseconds(channel, angle_pulse);
 }
+void moveServo(int servoChannel, int targetAngle) {
+    int currentAngle = map(analogRead(potPin), 0, 675, 0, 180);
+  while (currentAngle != targetAngle) {
+    int error = targetAngle - currentAngle;
+    int speed = constrain(error * 2, -50, 50); // Proportional control
 
+    if (abs(error) > 3) { // Deadband
+      int pulseWidth;
+      if (speed > 0) {
+        pulseWidth = map(speed, 0, 50, SERVOSTOP, SERVOMAX);
+      } else {
+        pulseWidth = map(speed, 0, -50, SERVOSTOP, SERVOMIN);
+      }
+      pwm.setPWM(servoChannel, 0, pulseWidth);
+    } else {
+      pwm.setPWM(servoChannel, 0, SERVOSTOP); // Stop
+    }
+    currentAngle = map(analogRead(potPin), 0, 675, 0, 180);
+    Serial.print("Target: "); Serial.print(targetAngle);
+    Serial.print(" Current: "); Serial.print(currentAngle);
+    Serial.print(" Error: "); Serial.println(error);
+    int raw = analogRead(potPin);  // 0–1023
+    Serial.println(raw);
+    delay(20);
+  }
+}
 Command currentCommand = CMD_STOP;
 
 void setup(){
